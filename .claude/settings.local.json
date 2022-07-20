@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npm create *)",
+      "Bash(npx create-electron-vite@latest . --template react-ts)",
+      "Bash(dir E:\\\\opt\\\\gitproject\\\\MapleStoryCalculatorV2 *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "WebFetch(domain:openapi.nexon.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh api *)",
+      "WebFetch(domain:github.com)",
+      "Bash(node -e \"const d=require\\('./doc/response.json'\\); d.item_equipment.forEach\\(i => console.log\\(JSON.stringify\\({slot: i.item_equipment_slot, part: i.item_equipment_part}\\)\\)\\)\")",
+      "Bash(node -e \"const d=require\\('./doc/response.json'\\); d.item_equipment.slice\\(0,3\\).forEach\\(i => console.log\\(JSON.stringify\\({slot: i.item_equipment_slot, preset_no: i.preset_no}\\)\\)\\)\")",
+      "Bash(node -e \"const d=require\\('./doc/response.json'\\); console.log\\(Object.keys\\(d.item_equipment[0]\\)\\)\")",
+      "Bash(node -e \"const d=require\\('./doc/response.json'\\); console.log\\(Object.keys\\(d\\)\\)\")",
+      "Bash(node -e ' *)"
+    ]
+  }
+}
