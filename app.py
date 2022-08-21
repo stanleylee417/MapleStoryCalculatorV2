@@ -50,6 +50,7 @@ class AppWindow(QtWidgets.QDialog):
         myUI.viewParameter_IMPROVE_VALUE_BOSS_P.textChanged.connect(me.calc_Improve)
         myUI.viewParameter_IMPROVE_VALUE_STRIKE_P.textChanged.connect(me.calc_Improve)
         myUI.viewParameter_IMPROVE_VALUE_IGNORE_P.textChanged.connect(me.calc_Improve)
+        myUI.viewParameter_IMPROVE_VALUE_AS_PARAMETER.activated.connect(me.calc_Improve)
 
         # page: 塔戒
         myUI.viewSeedRing_STR.textChanged.connect(me.calc_SeedRing)
@@ -67,6 +68,7 @@ class AppWindow(QtWidgets.QDialog):
         myUI.viewSeedRing_STRIKE_P.textChanged.connect(me.calc_SeedRing)
         myUI.viewSeedRing_IGNORE_P.textChanged.connect(me.calc_SeedRing)
         myUI.viewSeedRing_WP_ATTACK.textChanged.connect(me.calc_SeedRing)
+        # myUI.viewSeedRing_ALL_IN.textChanged.connect(me.calc_SeedRing)
         myUI.viewSeedRing_TIME_VALUE.valueChanged.connect(me.calc_SeedRing)
 
         # page: 裝備變更
@@ -200,6 +202,7 @@ class AppWindow(QtWidgets.QDialog):
 
                 if (item[0] == 'SEED_ALL_P'): myUI.viewSeedRing_ALL_P.setText(item[1])
 
+                # if (item[0] == 'SEED_ALL_IN'): myUI.viewSeedRing_ALL_IN.setText(item[1])
                 if (item[0] == 'SEED_WEAPON_ATTACK'): myUI.viewSeedRing_WP_ATTACK.setText(item[1])
             
             data.close()
@@ -272,6 +275,7 @@ class AppWindow(QtWidgets.QDialog):
                 'SEED_ALL_P=' + str(myUI.viewSeedRing_ALL_P.text()) + '\n',
                 
                 'SEED_WEAPON_ATTACK=' + str(myUI.viewSeedRing_WP_ATTACK.text()) + '\n',
+                # 'SEED_ALL_IN=' + str(myUI.viewSeedRing_ALL_IN.text()) + '\n',
             ]
 
             data.writelines(array)
@@ -485,6 +489,60 @@ class AppWindow(QtWidgets.QDialog):
 
             myUI.viewParameter_IMPROVE_Total.setText('總增幅 ' + toPercentText(IMPROVE_INFO['TOTAL']))
 
+            STATE_INFO = myCharactor.getEquivalent(IMPROVE_INFO['TOTAL'])
+            RANGE_TYPE = myUI.viewParameter_IMPROVE_VALUE_AS_PARAMETER.currentText().replace('　', '').replace(' ', '')
+            
+            def toRoundStr(value): 
+                return str(round(value, 3))
+
+            PREFIX_TXT = '等同於 增加 '
+            # print(STATE_INFO)
+            
+            if(RANGE_TYPE == '攻擊'):
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['ATTACK']))
+            
+            if(RANGE_TYPE == '％攻擊'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['ATTACK_P']*100))
+            
+            if(RANGE_TYPE == '％總傷'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['DMG_P']*100))
+            
+            if(RANGE_TYPE == '％Ｂ傷'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['BOSS_P']*100))
+            
+            if(RANGE_TYPE == '％爆傷'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['STRIKE_P']*100))
+            
+            if(RANGE_TYPE == '％無視'):
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['IGNORE_P']*100))
+            
+            if(RANGE_TYPE == '％全屬'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['ALL_P']*100))
+            
+            if(RANGE_TYPE == '力量'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['STR_CLEAR']))
+            
+            if(RANGE_TYPE == '％力量'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['STR_P']*100))
+            
+            if(RANGE_TYPE == '敏捷'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['DEX_CLEAR']))
+                
+            if(RANGE_TYPE == '％敏捷'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['DEX_P']*100))
+                
+            if(RANGE_TYPE == '智力'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['INT_CLEAR']))
+            
+            if(RANGE_TYPE == '％智力'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['INT_P']*100))
+                
+            if(RANGE_TYPE == '幸運'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['LUK_CLEAR']))
+                
+            if(RANGE_TYPE == '％幸運'): 
+                myUI.viewParameter_IMPROVE_VALUE_AS.setText(PREFIX_TXT + toRoundStr(STATE_INFO['LUK_P']*100))
+
             # 預估值
             myUI.viewParameter_ESTIMATE_STR.setText(str(round(ESTIMATE_INFO['STR'])))
             myUI.viewParameter_ESTIMATE_STR_P.setText(str(round(ESTIMATE_INFO['STR_P']*100)))
@@ -549,10 +607,16 @@ class AppWindow(QtWidgets.QDialog):
                 new_data['LUK_CLEAR'] += 4
                 new_data['ATTACK'] += 4
                 return new_data
+
+            # ALL_IN_VALUE = myUI.textToFloat(myUI.viewSeedRing_ALL_IN.text())
+            ALL_IN_VALUE = 1
+            OVER_VALUE = myCharactor.calcImprove(getData())['TOTAL']
             
-            def toPercentText(value, maxtime = 1):
-                t = TIME_VALUE > maxtime and maxtime or TIME_VALUE
-                return str(round((value-1) * 100 * t, 2)) + '%'
+            def toSeedValue(value, maxtime = 1):
+                RING_TIME = TIME_VALUE > maxtime and maxtime or TIME_VALUE
+                OVER_TIME = TIME_VALUE > maxtime and TIME_VALUE - maxtime or 0
+                SEED_VALUE = (value-1) * ALL_IN_VALUE * RING_TIME + (OVER_VALUE - 1) * OVER_TIME
+                return round(SEED_VALUE * 100, 2)
 
             CLASS_INFO = myCharactor.getClassInfo(myCharactor.getData()['CLASS_NAME'])
             MAIN_AP = ''
@@ -574,101 +638,117 @@ class AppWindow(QtWidgets.QDialog):
             new_data = getData()
             new_data['STR_CLEAR'] += WEAPON_ATTACK * 1
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_STR_LV1.setText(toPercentText(IMPROVE_INFO['TOTAL'], 9))
-            myUI.viewSeedRing_WEAPON_STR_LV1.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 9)
+            myUI.viewSeedRing_WEAPON_STR_LV1.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_STR_LV1.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['STR_CLEAR'] += WEAPON_ATTACK * 2
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_STR_LV2.setText(toPercentText(IMPROVE_INFO['TOTAL'], 11))
-            myUI.viewSeedRing_WEAPON_STR_LV2.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 11)
+            myUI.viewSeedRing_WEAPON_STR_LV2.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_STR_LV2.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['STR_CLEAR'] += WEAPON_ATTACK * 3
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_STR_LV3.setText(toPercentText(IMPROVE_INFO['TOTAL'], 13))
-            myUI.viewSeedRing_WEAPON_STR_LV3.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 13)
+            myUI.viewSeedRing_WEAPON_STR_LV3.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_STR_LV3.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['STR_CLEAR'] += WEAPON_ATTACK * 4
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_STR_LV4.setText(toPercentText(IMPROVE_INFO['TOTAL'], 15))
-            myUI.viewSeedRing_WEAPON_STR_LV4.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 15)
+            myUI.viewSeedRing_WEAPON_STR_LV4.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_STR_LV4.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             # DEX
             new_data = getData()
             new_data['DEX_CLEAR'] += WEAPON_ATTACK * 1
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_DEX_LV1.setText(toPercentText(IMPROVE_INFO['TOTAL'], 9))
-            myUI.viewSeedRing_WEAPON_DEX_LV1.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 9)
+            myUI.viewSeedRing_WEAPON_DEX_LV1.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_DEX_LV1.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['DEX_CLEAR'] += WEAPON_ATTACK * 2
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_DEX_LV2.setText(toPercentText(IMPROVE_INFO['TOTAL'], 11))
-            myUI.viewSeedRing_WEAPON_DEX_LV2.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 11)
+            myUI.viewSeedRing_WEAPON_DEX_LV2.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_DEX_LV2.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['DEX_CLEAR'] += WEAPON_ATTACK * 3
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_DEX_LV3.setText(toPercentText(IMPROVE_INFO['TOTAL'], 13))
-            myUI.viewSeedRing_WEAPON_DEX_LV3.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 13)
+            myUI.viewSeedRing_WEAPON_DEX_LV3.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_DEX_LV3.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['DEX_CLEAR'] += WEAPON_ATTACK * 4
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_DEX_LV4.setText(toPercentText(IMPROVE_INFO['TOTAL'], 15))
-            myUI.viewSeedRing_WEAPON_DEX_LV4.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 15)
+            myUI.viewSeedRing_WEAPON_DEX_LV4.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_DEX_LV4.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             # INT
             new_data = getData()
             new_data['INT_CLEAR'] += WEAPON_ATTACK * 1
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_INT_LV1.setText(toPercentText(IMPROVE_INFO['TOTAL'], 9))
-            myUI.viewSeedRing_WEAPON_INT_LV1.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 9)
+            myUI.viewSeedRing_WEAPON_INT_LV1.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_INT_LV1.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['INT_CLEAR'] += WEAPON_ATTACK * 2
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_INT_LV2.setText(toPercentText(IMPROVE_INFO['TOTAL'], 11))
-            myUI.viewSeedRing_WEAPON_INT_LV2.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 11)
+            myUI.viewSeedRing_WEAPON_INT_LV2.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_INT_LV2.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['INT_CLEAR'] += WEAPON_ATTACK * 3
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_INT_LV3.setText(toPercentText(IMPROVE_INFO['TOTAL'], 13))
-            myUI.viewSeedRing_WEAPON_INT_LV3.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 13)
+            myUI.viewSeedRing_WEAPON_INT_LV3.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_INT_LV3.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['INT_CLEAR'] += WEAPON_ATTACK * 4
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_INT_LV4.setText(toPercentText(IMPROVE_INFO['TOTAL'], 15))
-            myUI.viewSeedRing_WEAPON_INT_LV4.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 15)
+            myUI.viewSeedRing_WEAPON_INT_LV4.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_INT_LV4.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             # LUK
             new_data = getData()
             new_data['LUK_CLEAR'] += WEAPON_ATTACK * 1
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_LUK_LV1.setText(toPercentText(IMPROVE_INFO['TOTAL'], 9))
-            myUI.viewSeedRing_WEAPON_LUK_LV1.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 9)
+            myUI.viewSeedRing_WEAPON_LUK_LV1.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_LUK_LV1.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['LUK_CLEAR'] += WEAPON_ATTACK * 2
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_LUK_LV2.setText(toPercentText(IMPROVE_INFO['TOTAL'], 11))
-            myUI.viewSeedRing_WEAPON_LUK_LV2.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 11)
+            myUI.viewSeedRing_WEAPON_LUK_LV2.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_LUK_LV2.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['LUK_CLEAR'] += WEAPON_ATTACK * 3
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_LUK_LV3.setText(toPercentText(IMPROVE_INFO['TOTAL'], 13))
-            myUI.viewSeedRing_WEAPON_LUK_LV3.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 13)
+            myUI.viewSeedRing_WEAPON_LUK_LV3.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_LUK_LV3.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             new_data = getData()
             new_data['LUK_CLEAR'] += WEAPON_ATTACK * 4
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_WEAPON_LUK_LV4.setText(toPercentText(IMPROVE_INFO['TOTAL'], 15))
-            myUI.viewSeedRing_WEAPON_LUK_LV4.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 15)
+            myUI.viewSeedRing_WEAPON_LUK_LV4.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_WEAPON_LUK_LV4.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             # TOTALING
             TOTALLING_AP = (myCharactor.getData()['STR'] + myCharactor.getData()['DEX'] + myCharactor.getData()['INT'] + myCharactor.getData()['LUK']) * 0.01
@@ -676,101 +756,117 @@ class AppWindow(QtWidgets.QDialog):
             new_data = getData()
             new_data[MAIN_AP] += TOTALLING_AP * 1
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_TOTALLING_LV1.setText(toPercentText(IMPROVE_INFO['TOTAL'], 9))
-            myUI.viewSeedRing_TOTALLING_LV1.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 9)
+            myUI.viewSeedRing_TOTALLING_LV1.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_TOTALLING_LV1.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data[MAIN_AP] += TOTALLING_AP * 1
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_TOTALLING_LV2.setText(toPercentText(IMPROVE_INFO['TOTAL'], 11))
-            myUI.viewSeedRing_TOTALLING_LV2.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 11)
+            myUI.viewSeedRing_TOTALLING_LV2.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_TOTALLING_LV2.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data[MAIN_AP] += TOTALLING_AP * 2
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_TOTALLING_LV3.setText(toPercentText(IMPROVE_INFO['TOTAL'], 13))
-            myUI.viewSeedRing_TOTALLING_LV3.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 13)
+            myUI.viewSeedRing_TOTALLING_LV3.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_TOTALLING_LV3.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data[MAIN_AP] += TOTALLING_AP * 2
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_TOTALLING_LV4.setText(toPercentText(IMPROVE_INFO['TOTAL'], 15))
-            myUI.viewSeedRing_TOTALLING_LV4.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 15)
+            myUI.viewSeedRing_TOTALLING_LV4.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_TOTALLING_LV4.setStyleSheet(myUI.getColor(SEED_VALUE))
             
             # RISTTAKER
             new_data = getData()
             new_data['ATTACK_P'] += 0.2
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_RISTTAKER_LV1.setText(toPercentText(IMPROVE_INFO['TOTAL'], 12))
-            myUI.viewSeedRing_RISTTAKER_LV1.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 12)
+            myUI.viewSeedRing_RISTTAKER_LV1.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_RISTTAKER_LV1.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data['ATTACK_P'] += 0.3
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_RISTTAKER_LV2.setText(toPercentText(IMPROVE_INFO['TOTAL'], 18))
-            myUI.viewSeedRing_RISTTAKER_LV2.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 18)
+            myUI.viewSeedRing_RISTTAKER_LV2.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_RISTTAKER_LV2.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data['ATTACK_P'] += 0.4
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_RISTTAKER_LV3.setText(toPercentText(IMPROVE_INFO['TOTAL'], 24))
-            myUI.viewSeedRing_RISTTAKER_LV3.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 24)
+            myUI.viewSeedRing_RISTTAKER_LV3.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_RISTTAKER_LV3.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data['ATTACK_P'] += 0.5
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_RISTTAKER_LV4.setText(toPercentText(IMPROVE_INFO['TOTAL'], 30))
-            myUI.viewSeedRing_RISTTAKER_LV4.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 30)
+            myUI.viewSeedRing_RISTTAKER_LV4.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_RISTTAKER_LV4.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             # RESTRAINT
             new_data = getData()
             new_data['ATTACK_P'] += 0.25
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_RESTRAINT_LV1.setText(toPercentText(IMPROVE_INFO['TOTAL'], 9))
-            myUI.viewSeedRing_RESTRAINT_LV1.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 9)
+            myUI.viewSeedRing_RESTRAINT_LV1.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_RESTRAINT_LV1.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data['ATTACK_P'] += 0.50
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_RESTRAINT_LV2.setText(toPercentText(IMPROVE_INFO['TOTAL'], 11))
-            myUI.viewSeedRing_RESTRAINT_LV2.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 11)
+            myUI.viewSeedRing_RESTRAINT_LV2.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_RESTRAINT_LV2.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data['ATTACK_P'] += 0.75
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_RESTRAINT_LV3.setText(toPercentText(IMPROVE_INFO['TOTAL'], 13))
-            myUI.viewSeedRing_RESTRAINT_LV3.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 13)
+            myUI.viewSeedRing_RESTRAINT_LV3.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_RESTRAINT_LV3.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
             new_data['ATTACK_P'] += 1.00
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_RESTRAINT_LV4.setText(toPercentText(IMPROVE_INFO['TOTAL'], 15))
-            myUI.viewSeedRing_RESTRAINT_LV4.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 15)
+            myUI.viewSeedRing_RESTRAINT_LV4.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_RESTRAINT_LV4.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             # STRIKE
             new_data = getData()
-            new_data['STRIKE_P'] += myCharactor.getData()['STRIKE_P'] * 0.07
+            new_data['STRIKE_P'] += 0.07
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_STRIKE_LV1.setText(toPercentText(IMPROVE_INFO['TOTAL'], 9))
-            myUI.viewSeedRing_STRIKE_LV1.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 9)
+            myUI.viewSeedRing_STRIKE_LV1.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_STRIKE_LV1.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
-            new_data['STRIKE_P'] += myCharactor.getData()['STRIKE_P'] * 0.14
+            new_data['STRIKE_P'] += 0.14
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_STRIKE_LV2.setText(toPercentText(IMPROVE_INFO['TOTAL'], 11))
-            myUI.viewSeedRing_STRIKE_LV2.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 11)
+            myUI.viewSeedRing_STRIKE_LV2.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_STRIKE_LV2.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
-            new_data['STRIKE_P'] += myCharactor.getData()['STRIKE_P'] * 0.21
+            new_data['STRIKE_P'] += 0.21
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_STRIKE_LV3.setText(toPercentText(IMPROVE_INFO['TOTAL'], 13))
-            myUI.viewSeedRing_STRIKE_LV3.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 13)
+            myUI.viewSeedRing_STRIKE_LV3.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_STRIKE_LV3.setStyleSheet(myUI.getColor(SEED_VALUE))
 
             new_data = getData()
-            new_data['STRIKE_P'] += myCharactor.getData()['STRIKE_P'] * 0.28
+            new_data['STRIKE_P'] += 0.28
             IMPROVE_INFO = myCharactor.calcImprove(new_data)
-            myUI.viewSeedRing_STRIKE_LV4.setText(toPercentText(IMPROVE_INFO['TOTAL'], 15))
-            myUI.viewSeedRing_STRIKE_LV4.setStyleSheet(myUI.getColor(IMPROVE_INFO['TOTAL']))
+            SEED_VALUE = toSeedValue(IMPROVE_INFO['TOTAL'], 15)
+            myUI.viewSeedRing_STRIKE_LV4.setText(str(SEED_VALUE) + '%')
+            myUI.viewSeedRing_STRIKE_LV4.setStyleSheet(myUI.getColor(SEED_VALUE))
             
         except Exception:
             QtWidgets.QMessageBox.warning(me, '提示', '輸入資料有誤')

@@ -1,6 +1,7 @@
 class Charactor():
     def __init__(me):
-        me.isReset = me.reset()
+        me.isReset = False
+        me.reset()
     # Array: 職業清單
     def getClasslist(me):
         CLASS_LIST = [
@@ -219,7 +220,7 @@ class Charactor():
 
             'FIX': 1
         }
-        return True
+        me.isReset = True
 
     # function: 更新角色能力值到 me.data
     def updateAbilityByData(me, data):
@@ -678,6 +679,9 @@ class Charactor():
             'LUK_CLEAR': 0,
             'LUK_P': 0,
         }
+
+        if (IMPROVE_RANGE == 1):
+            return STATE_INFO
 
         STATE_INFO['ATTACK'] = data['ATTACK'] * (IMPROVE_RANGE - 1)
         STATE_INFO['ATTACK_P'] = (1 + data['ATTACK_P']) * (IMPROVE_RANGE - 1)
