@@ -942,7 +942,7 @@ class AppWindow(QtWidgets.QDialog):
             SET_INFO['STR_CLEAR'] += myUI.textToFloat(myUI.viewEquipment_Set2_STR.text())
             SET_INFO['STR_P'] += (myUI.textToFloat(myUI.viewEquipment_Set2_STR_P.text())/100)
             SET_INFO['DEX_CLEAR'] += myUI.textToFloat(myUI.viewEquipment_Set2_DEX.text())
-            SET_INFO['DEX_P'] += (myUI.textToFloat(myUI.viewEquipment_Set2_STR_P.text())/100)
+            SET_INFO['DEX_P'] += (myUI.textToFloat(myUI.viewEquipment_Set2_DEX_P.text())/100)
             SET_INFO['INT_CLEAR'] += myUI.textToFloat(myUI.viewEquipment_Set2_INT.text())
             SET_INFO['INT_P'] += (myUI.textToFloat(myUI.viewEquipment_Set2_INT_P.text())/100)
             SET_INFO['LUK_CLEAR'] += myUI.textToFloat(myUI.viewEquipment_Set2_LUK.text())

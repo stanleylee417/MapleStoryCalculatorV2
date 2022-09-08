@@ -2,7 +2,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 
 class Calculator_UI():
     def setupUi(me, Form):
-        me.version = 'V2.22072401'
+        me.version = 'V2.22090801'
         title = '裝備效益計算機 ' + me.version
         form_w = 540
         form_h = 474

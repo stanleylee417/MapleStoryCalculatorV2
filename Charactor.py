@@ -125,7 +125,7 @@ class Charactor():
             pass
 
         CLASS_LIST = [
-            '英雄(單手武器)','箭神','神射手','開拓者','暗影神偷','影武者','破風使者','狂豹獵人', '惡魔復仇者',
+            '英雄(單手武器)','箭神','開拓者','暗影神偷','影武者','破風使者','惡魔復仇者',
             '精靈遊俠','夜光','幻影俠盜','卡蒂娜','凱殷','阿戴爾','虎影',
         ]
         if (CLASS_NAME in CLASS_LIST):
@@ -142,7 +142,7 @@ class Charactor():
             CLASS_INFO['WP_VALUE'] = 1.34
             pass
 
-        CLASS_LIST = ['陰陽師',]
+        CLASS_LIST = ['陰陽師','神射手','狂豹獵人',]
         if (CLASS_NAME in CLASS_LIST):
             CLASS_INFO['WP_VALUE'] = 1.35
             pass
