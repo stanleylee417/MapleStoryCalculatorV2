@@ -2,13 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+html {
+  overflow: hidden;
+}
 
 body {
-  background-color: #111;
+  background: transparent;
   font-family: sans-serif;
   color: #fff;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;

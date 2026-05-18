@@ -1,16 +1,11 @@
 import React, { useState } from 'react'
-import { fetchCharacterOcid, fetchCharacterBasic, fetchCharacterEquipment, fetchCharacterPetEquipment } from '@/lib/nexonApi'
+import { fetchCharacterOcid, fetchCharacterBasic, fetchCharacterEquipment, fetchCharacterPetEquipment, fetchCharacterStat, fetchCharacterHyperStat, fetchCharacterSymbolEquipment, fetchUnionRaider } from '@/lib/nexonApi'
 import { NexonCharacterBasic } from '@/types/character'
 import { NexonEquipmentItem, NexonPetEquipmentResponse } from '@/types/equipment'
+import { NexonFinalStat } from '@/types/stat'
+import { NexonHyperStatResponse, NexonSymbolEquipmentResponse, NexonUnionRaiderResponse } from '@/types/extraStats'
 import { SLOT_DEFS, SlotDef } from './slotDefinitions'
-
 type PresetKey = 1 | 2 | 3
-
-interface TooltipState {
-  name: string
-  x: number
-  y: number
-}
 
 export default function CharacterSetup() {
   const [characterName, setCharacterName] = useState(window.api.defaultCharacterName)
@@ -18,11 +13,14 @@ export default function CharacterSetup() {
   const [error, setError] = useState<string | null>(null)
   const [characterBasic, setCharacterBasic] = useState<NexonCharacterBasic | null>(null)
   const [activePreset, setActivePreset] = useState<PresetKey>(1)
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [presetMaps, setPresetMaps] = useState<Record<PresetKey, Record<string, NexonEquipmentItem>>>({
     1: {}, 2: {}, 3: {}
   })
   const [petEquipment, setPetEquipment] = useState<NexonPetEquipmentResponse | null>(null)
+  const [finalStats, setFinalStats] = useState<NexonFinalStat[]>([])
+  const [hyperStat, setHyperStat] = useState<NexonHyperStatResponse | null>(null)
+  const [symbolEquipment, setSymbolEquipment] = useState<NexonSymbolEquipmentResponse | null>(null)
+  const [unionRaider, setUnionRaider] = useState<NexonUnionRaiderResponse | null>(null)
 
   const equipmentMap = presetMaps[activePreset]
 
@@ -32,16 +30,14 @@ export default function CharacterSetup() {
     setError(null)
     try {
       const ocid = await fetchCharacterOcid(characterName.trim())
-      const [basic, equip, pet] = await Promise.all([
-        fetchCharacterBasic(ocid),
-        fetchCharacterEquipment(ocid),
-        fetchCharacterPetEquipment(ocid)
-      ])
-      console.log('character basic:', JSON.stringify(basic, null, 2))
-      console.log('equipment:', JSON.stringify(equip, null, 2))
-      console.log('pet equipment:', JSON.stringify(pet, null, 2))
-      console.log('preset1 android:', equip.item_equipment_preset_1.find(i => i.item_equipment_slot === '機器人'))
-      console.log('item_equipment android:', equip.item_equipment.find(i => i.item_equipment_slot === '機器人'))
+      const basic  = await fetchCharacterBasic(ocid)
+      const equip  = await fetchCharacterEquipment(ocid)
+      const pet    = await fetchCharacterPetEquipment(ocid)
+      const stat   = await fetchCharacterStat(ocid)
+      const hyper  = await fetchCharacterHyperStat(ocid)
+      const symbol = await fetchCharacterSymbolEquipment(ocid)
+      const union  = await fetchUnionRaider(ocid)
+      console.log(JSON.stringify({ final_stat: stat.final_stat, hyper, symbol, union }, null, 2))
       setCharacterBasic(basic)
 
       function itemsToMap(items: NexonEquipmentItem[]): Record<string, NexonEquipmentItem> {
@@ -63,6 +59,10 @@ export default function CharacterSetup() {
         3: { ...baseMap, ...itemsToMap(equip.item_equipment_preset_3) },
       })
       setPetEquipment(pet)
+      setFinalStats(stat.final_stat)
+      setHyperStat(hyper)
+      setSymbolEquipment(symbol)
+      setUnionRaider(union)
     } catch (e) {
       setError(e instanceof Error ? e.message : '查詢失敗')
     } finally {
@@ -72,13 +72,10 @@ export default function CharacterSetup() {
 
   return (
     <div style={{ position: 'relative' }}>
-      {tooltip && (
-        <Tooltip name={tooltip.name} x={tooltip.x} y={tooltip.y} />
-      )}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(7, 1fr)',
-        gridTemplateRows: 'repeat(6, auto) 20px auto',
+        gridTemplateRows: 'repeat(6, auto) 20px repeat(3, auto)',
         gap: 5,
       }}>
         {/* Character space */}
@@ -113,7 +110,10 @@ export default function CharacterSetup() {
               item={equipmentMap[slot.key]}
               petIcon={petIcon ?? undefined}
               petName={petName ?? undefined}
-              onHover={(name, x, y) => setTooltip(name ? { name, x, y } : null)}
+              onHover={(item, x, y) => item
+                ? window.api.tooltip.show(item, x, y)
+                : window.api.tooltip.hide()
+              }
             />
           )
         })}
@@ -122,6 +122,18 @@ export default function CharacterSetup() {
         <div style={{ gridColumn: 'span 7', display: 'flex', alignItems: 'center', height: 20 }}>
           <div style={{ width: '100%', height: 2, background: '#d1d4d9', borderBottom: '1px solid #fff', opacity: 0.8, borderRadius: 1 }} />
         </div>
+
+        {/* Stats panel — col 3-7, row 8-10 */}
+        {finalStats.length > 0 && (
+          <StatPanel
+            finalStats={finalStats}
+            characterBasic={characterBasic}
+            equipmentMap={equipmentMap}
+            hyperStat={hyperStat}
+            symbolEquipment={symbolEquipment}
+            unionRaider={unionRaider}
+          />
+        )}
       </div>
 
       {/* Preset + Apply row */}
@@ -274,33 +286,12 @@ function CharacterSpace({ characterBasic, characterName, loading, error, onChang
   )
 }
 
-function Tooltip({ name, x, y }: { name: string; x: number; y: number }) {
-  return (
-    <div style={{
-      position: 'fixed',
-      left: x + 40,
-      top: y,
-      background: '#1a1a2e',
-      border: '1px solid #555',
-      borderRadius: 4,
-      padding: '4px 8px',
-      fontSize: 11,
-      color: '#fff',
-      whiteSpace: 'nowrap',
-      zIndex: 999,
-      pointerEvents: 'none',
-    }}>
-      {name}
-    </div>
-  )
-}
-
 function EquipmentSlot({ slot, item, petIcon, petName, onHover }: {
   slot: SlotDef
   item?: NexonEquipmentItem
   petIcon?: string
   petName?: string
-  onHover: (name: string | null, x: number, y: number) => void
+  onHover: (item: NexonEquipmentItem | null, x: number, y: number) => void
 }) {
   const displayIcon = item?.item_icon ?? petIcon
   const displayName = item?.item_name ?? petName
@@ -309,14 +300,149 @@ function EquipmentSlot({ slot, item, petIcon, petName, onHover }: {
     <div
       className={`slot ${slot.bg}`}
       style={{ gridColumn: slot.col, gridRow: slot.row }}
-      onMouseEnter={e => displayName && onHover(displayName, e.clientX, e.clientY)}
-      onMouseMove={e => displayName && onHover(displayName, e.clientX, e.clientY)}
+      onMouseEnter={e => item && onHover(item, e.screenX, e.screenY)}
+      onMouseMove={e => item && onHover(item, e.screenX, e.screenY)}
       onMouseLeave={() => onHover(null, 0, 0)}
     >
       {!displayIcon && <span className="slot-label">{slot.label}</span>}
       {displayIcon && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <img src={displayIcon} alt={displayName} className="slot-icon" />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StatPanel({ finalStats, characterBasic, equipmentMap, hyperStat, symbolEquipment, unionRaider }: {
+  finalStats: NexonFinalStat[]
+  characterBasic: NexonCharacterBasic | null
+  equipmentMap: Record<string, NexonEquipmentItem>
+  hyperStat: NexonHyperStatResponse | null
+  symbolEquipment: NexonSymbolEquipmentResponse | null
+  unionRaider: NexonUnionRaiderResponse | null
+}) {
+  const get = (name: string) => {
+    const v = finalStats.find(s => s.stat_name === name)?.stat_value ?? '—'
+    return v === '—' ? '—' : v.replace(/\.00$/, '')
+  }
+  const pct = (name: string) => {
+    const v = get(name)
+    return v === '—' ? '—' : `${v}%`
+  }
+
+  const atk = Math.max(
+    parseInt(get('攻擊力') || '0', 10),
+    parseInt(get('魔法攻擊力') || '0', 10)
+  )
+
+  // 裝備 total option 加總
+  const sumEquip = (key: 'str' | 'dex' | 'int' | 'luk') =>
+    Object.values(equipmentMap).reduce((acc, item) =>
+      acc + parseInt(item.item_total_option?.[key] ?? '0', 10), 0)
+
+  // Hyper stat flat 加總（取 active preset）
+  const hyperFlat = (statType: string): number => {
+    if (!hyperStat) return 0
+    const presetKey = `hyper_stat_preset_${hyperStat.use_preset_no}` as keyof NexonHyperStatResponse
+    const preset = hyperStat[presetKey] as { stat_type: string; stat_increase: string }[] | undefined
+    if (!preset) return 0
+    const entry = preset.find(e => e.stat_type === statType)
+    return parseInt(entry?.stat_increase ?? '0', 10) || 0
+  }
+
+  // Symbol flat 加總
+  const symbolFlat = (key: 'symbol_str' | 'symbol_dex' | 'symbol_int' | 'symbol_luk'): number => {
+    if (!symbolEquipment) return 0
+    return symbolEquipment.symbol.reduce((acc, s) => acc + (parseInt(s[key] ?? '0', 10) || 0), 0)
+  }
+
+  // Union raider stat 加總（字串格式如 "STR 80 增加"）
+  const unionFlat = (statName: string): number => {
+    if (!unionRaider) return 0
+    return unionRaider.union_raider_stat.reduce((acc, s) => {
+      const m = s.match(new RegExp(`${statName}\\s+(\\d+)`))
+      return acc + (m ? parseInt(m[1], 10) : 0)
+    }, 0)
+  }
+
+  // 反推 stat% = (finalStat / totalKnownFlat - 1) × 100
+  // totalKnownFlat = equipTotal + hyperFlat + symbolFlat + unionFlat
+  // 注意：不含 AP base，反推結果為「已知來源以外的倍率貢獻」估算值
+  const statBreakdown = (finalKey: string, equipKey: 'str' | 'dex' | 'int' | 'luk', hyperKey: string, symbolKey: 'symbol_str' | 'symbol_dex' | 'symbol_int' | 'symbol_luk', unionKey: string) => {
+    const finalVal = parseInt(get(finalKey) || '0', 10)
+    if (!finalVal) return get(finalKey)
+
+    const eTotal = sumEquip(equipKey)
+    const hFlat = hyperFlat(hyperKey)
+    const sFlat = symbolFlat(symbolKey)
+    const uFlat = unionFlat(unionKey)
+    const knownFlat = eTotal + hFlat + sFlat + uFlat
+
+    const parts: string[] = []
+    if (eTotal) parts.push(`裝${eTotal}`)
+    if (hFlat)  parts.push(`超${hFlat}`)
+    if (sFlat)  parts.push(`符${sFlat}`)
+    if (uFlat)  parts.push(`聯${uFlat}`)
+
+    if (!knownFlat) return get(finalKey)
+
+    const rawPct = (finalVal / knownFlat - 1) * 100
+    const pctStr = rawPct > 0.1 ? ` ×${(1 + rawPct / 100).toFixed(3)}` : ''
+    return `${get(finalKey)}  （${parts.join(' ')}${pctStr}）`
+  }
+
+  const fullRows: { label: string; value: string }[] = [
+    { label: '攻擊力', value: atk.toLocaleString() },
+    { label: 'STR', value: statBreakdown('STR', 'str', 'STR', 'symbol_str', 'STR') },
+    { label: 'DEX', value: statBreakdown('DEX', 'dex', 'DEX', 'symbol_dex', 'DEX') },
+    { label: 'INT', value: statBreakdown('INT', 'int', 'INT', 'symbol_int', 'INT') },
+    { label: 'LUK', value: statBreakdown('LUK', 'luk', 'LUK', 'symbol_luk', 'LUK') },
+  ]
+  const pairRows: [{ label: string; value: string }, { label: string; value: string }][] = [
+    [{ label: 'BOSS傷害', value: pct('BOSS怪物傷害') }, { label: '無視防禦', value: pct('無視防禦率') }],
+    [{ label: '傷害',    value: pct('傷害') },          { label: '最終傷害', value: pct('最終傷害') }],
+    [{ label: '爆擊傷害', value: pct('爆擊傷害') },     { label: '',         value: '' }],
+  ]
+
+  const labelStyle: React.CSSProperties = { color: '#546e7a', flexShrink: 0, fontWeight: 'bold' }
+  const valueStyle: React.CSSProperties = { color: '#1a252f', textAlign: 'right', fontWeight: 500 }
+
+  return (
+    <div style={{
+      gridColumn: '3 / span 5',
+      gridRow: '8 / span 3',
+      borderRadius: 6,
+      padding: '6px 8px',
+      fontSize: 12,
+      color: '#ccc',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 2,
+    }}>
+      {fullRows.map(({ label, value }) => (
+        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', lineHeight: 1.55 }}>
+          <span style={labelStyle}>{label}</span>
+          <span style={valueStyle}>{value}</span>
+        </div>
+      ))}
+      <div style={{ height: 1, background: '#b2bec3', margin: '2px 0', opacity: 0.5 }} />
+      {pairRows.map(([left, right], i) => (
+        <div key={i} style={{ display: 'flex', gap: 8, lineHeight: 1.55 }}>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+            <span style={labelStyle}>{left.label}</span>
+            <span style={valueStyle}>{left.value}</span>
+          </div>
+          <div style={{ width: 1, background: '#b2bec3', opacity: 0.4 }} />
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+            <span style={labelStyle}>{right.label}</span>
+            <span style={valueStyle}>{right.value}</span>
+          </div>
+        </div>
+      ))}
+      {characterBasic && (
+        <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px solid #b2bec3', fontSize: 9, color: '#7f8c8d', textAlign: 'center' }}>
+          {characterBasic.character_name} · {characterBasic.character_class} · Lv.{characterBasic.character_level}
         </div>
       )}
     </div>

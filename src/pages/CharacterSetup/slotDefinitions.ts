@@ -52,14 +52,13 @@ export const SLOT_DEFS: SlotDef[] = [
   { key: 'totem1',    label: 'TOTEM',     col: 3, row: 6, bg: 'bg-valuable',apiSlot: '馴服的怪物' },
   { key: 'totem2',    label: 'TOTEM',     col: 4, row: 6, bg: 'bg-valuable',apiSlot: '馬鞍' },
   { key: 'totem3',    label: 'TOTEM',     col: 5, row: 6, bg: 'bg-valuable',apiSlot: '怪物裝備' },
-  // col 6 row 6 = empty
   { key: 'badge',     label: 'BADGE',     col: 7, row: 6, bg: 'bg-special', apiSlot: '胸章' },
 
-  // Row 8 (after separator at row 7)
-  { key: 'pet1',      label: 'PET',       col: 1, row: 8, bg: 'bg-acc',     apiSlot: '寵物裝備1' },
-  { key: 'petacc1',   label: 'PET ACC',   col: 2, row: 8, bg: 'bg-valuable',apiSlot: '寵物裝備道具1' },
-  { key: 'pet2',      label: 'PET',       col: 3, row: 8, bg: 'bg-acc',     apiSlot: '寵物裝備2' },
-  { key: 'petacc2',   label: 'PET ACC',   col: 4, row: 8, bg: 'bg-valuable',apiSlot: '寵物裝備道具2' },
-  { key: 'pet3',      label: 'PET',       col: 5, row: 8, bg: 'bg-acc',     apiSlot: '寵物裝備3' },
-  { key: 'petacc3',   label: 'PET ACC',   col: 6, row: 8, bg: 'bg-valuable',apiSlot: '寵物裝備道具3' },
+  // Rows 8-10 (after separator at row 7) — pets vertical, col 3-7 reserved for stats
+  { key: 'pet1',      label: 'PET',       col: 1, row: 8,  bg: 'bg-acc',     apiSlot: '寵物裝備1' },
+  { key: 'petacc1',   label: 'PET ACC',   col: 2, row: 8,  bg: 'bg-valuable',apiSlot: '寵物裝備道具1' },
+  { key: 'pet2',      label: 'PET',       col: 1, row: 9,  bg: 'bg-acc',     apiSlot: '寵物裝備2' },
+  { key: 'petacc2',   label: 'PET ACC',   col: 2, row: 9,  bg: 'bg-valuable',apiSlot: '寵物裝備道具2' },
+  { key: 'pet3',      label: 'PET',       col: 1, row: 10, bg: 'bg-acc',     apiSlot: '寵物裝備3' },
+  { key: 'petacc3',   label: 'PET ACC',   col: 2, row: 10, bg: 'bg-valuable',apiSlot: '寵物裝備道具3' },
 ]

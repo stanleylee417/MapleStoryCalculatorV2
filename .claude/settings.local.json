@@ -15,7 +15,8 @@
       "Bash(node -e \"const d=require\\('./doc/response.json'\\); d.item_equipment.slice\\(0,3\\).forEach\\(i => console.log\\(JSON.stringify\\({slot: i.item_equipment_slot, preset_no: i.preset_no}\\)\\)\\)\")",
       "Bash(node -e \"const d=require\\('./doc/response.json'\\); console.log\\(Object.keys\\(d.item_equipment[0]\\)\\)\")",
       "Bash(node -e \"const d=require\\('./doc/response.json'\\); console.log\\(Object.keys\\(d\\)\\)\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(npx tsc *)"
     ]
   }
 }
